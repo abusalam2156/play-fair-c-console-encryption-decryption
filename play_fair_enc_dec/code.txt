@@ -1,0 +1,266 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace play_fair_enc_dec
+{
+    public class playfair
+    {
+        int[,] ply = new int[5, 5];
+        public void start()
+        {
+        again:
+
+            Console.WriteLine("enter 1 to encrypt text");
+            Console.WriteLine("enter 2 to decrypt text");
+            int a = int.Parse(Console.ReadLine());
+
+            make_array();
+            switch (a)
+            {
+                case 1:
+                    encrypt(); break;
+                case 2:
+                    decrypt(); break;
+            }
+
+        }
+
+        void make_array()
+        {
+            int i, j, n = 0, ltr = 96;
+
+            string key;
+            Console.WriteLine("enter the keyword");
+            key = Console.ReadLine();
+
+            char[,] ply_ltrs = new char[5, 5];
+
+            for (i = 0; i < 5; i++)    // reset play[] elements to0
+                for (j = 0; j < 5; j++)
+                    ply[i, j] = 0;
+
+
+            for (i = 0; i < 5; i++)    //add key_letters
+            {
+                for (j = 0; j < 5; j++)
+                {
+                    if (n < key.Length)
+                    {
+                        if (can_add(key[n], ply))
+                        { ply[i, j] = key[n]; }
+                        else
+                        {
+                            if (j == 0) { i--; j = 4; } else { j--; }
+                        }
+                    }
+
+                    else
+                    {
+                        ltr++;
+                        if (can_add(ltr, ply))
+                        {
+                            ply[i, j] = ltr;
+
+                        }
+                        else
+                        {
+                            if (j == 0) { i--; j = 4; } else { j--; }
+
+                        }
+                    }
+                    n++;
+                }
+            }
+
+
+            Console.WriteLine("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            delet_j();
+            for (i = 0; i < 5; i++)
+            {
+                for (j = 0; j < 5; j++)
+                {
+                    ply_ltrs[i, j] = Convert.ToChar(ply[i, j]);
+                    Console.Write(ply_ltrs[i, j]);
+                }
+                Console.WriteLine("");
+            }
+            Console.WriteLine("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            Console.WriteLine("                ");
+
+
+        }
+        void encrypt()
+        {
+
+            int[] indexes = new int[4];
+            int i, j, i1, i2, j1, j2;
+            string str_msg = insert_text();
+            int[] txt_enc = new int[str_msg.Length];
+            for (i = 0; i < str_msg.Length; i = i + 2)
+            {
+                indexes = find_idexes(str_msg[i], str_msg[i + 1]);  // indexes = [ i1 j1 i2 j2 ]  first and second number
+                i1 = indexes[0]; j1 = indexes[1]; i2 = indexes[2]; j2 = indexes[3];
+                if (i1 == i2)  //same row (i1=i2)
+                {
+
+                    if (j1 == 0) { txt_enc[i] = ply[i1, 4]; } else { txt_enc[i] = ply[i1, j1 - 1]; } //left shift
+                    if (j2 == 0) { txt_enc[i + 1] = ply[i2, 4]; } else { txt_enc[i + 1] = ply[i2, j2 - 1]; } //left shift
+
+                }
+                else if (j1 == j2)               //same column (j1=j2)
+                {
+                    if (i1 == 4) { txt_enc[i] = ply[4, j1]; } else { txt_enc[i] = ply[i1 + 1, j1]; } //up shift
+                    if (i2 == 4) { txt_enc[i + 1] = ply[4, j2]; } else { txt_enc[i + 1] = ply[i2 + 1, j2]; }//up shift
+                }
+
+                else     //differnt   position
+                {
+
+                    txt_enc[i] = ply[i1, j2];
+                    txt_enc[i + 1] = ply[i2, j1];
+                }
+
+            }
+            Console.WriteLine("************** encrypted_text **************");
+            for (i = 0; i < txt_enc.Length; i++)
+                Console.Write(Convert.ToChar(txt_enc[i]));
+
+            Console.ReadLine();
+
+        }
+        void decrypt()
+        {
+
+            int i, j, i1, j1, i2, j2;
+            int[] indexes = new int[4];
+
+            string txt = insert_text();           //ibuhmo
+            int[] arr1 = new int[txt.Length];
+
+            for (i = 0; i < txt.Length; i = i + 2)
+            {
+                indexes = find_idexes(txt[i], txt[i + 1]);//01 23 34
+                i1 = indexes[0]; j1 = indexes[1]; i2 = indexes[2]; j2 = indexes[3];
+
+                if (i1 == i2)  //same row (i1=i2)
+                {
+
+                    if (j1 == 4) { arr1[i] = ply[i1, 0]; } else { arr1[i] = ply[i1, j1 + 1]; } //right shift
+                    if (j2 == 4) { arr1[i + 1] = ply[i2, 0]; } else { arr1[i + 1] = ply[i2, j2 + 1]; }//left shift
+
+                }
+                else if (j1 == j2)               //same column (j1=j2)
+                {
+                    if (i1 == 0) { arr1[i] = ply[4, j1]; } else { arr1[i] = ply[i1 - 1, j1]; } //down shift
+
+                    if (i2 == 0) { arr1[i + 1] = ply[4, j2]; } else { arr1[i + 1] = ply[i2 - 1, j2]; } //down shift
+                }
+
+                else     //differnt   position
+                {
+
+                    arr1[i] = ply[i1, j2];
+                    arr1[i + 1] = ply[i2, j1];
+                }
+
+            }
+
+            Console.WriteLine("************** decrypted_text **************");
+            for (i = 0; i < arr1.Length; i++)
+                Console.Write(Convert.ToChar(arr1[i]));
+            Console.ReadLine();
+        }
+        void delet_j()
+        {
+            int i, j;
+            bool yes_found = false;
+            for (i = 0; i < 5; i++)
+            {
+                for (j = 0; j < 5; j++)
+                {
+                    if (ply[i, j] == 'j') { yes_found = true; }
+                    if (yes_found)
+                    {
+                        if (j == 4 & i < 4)
+                        { ply[i, j] = ply[i + 1, 0]; }
+                        else if (i == 4 & j == 4)
+                        { ply[i, j] = 'z'; }
+                        else
+                        { ply[i, j] = ply[i, j + 1]; }
+                    }
+                }
+            }
+        }
+        bool can_add(int x, int[,] str_key)
+        {
+            int i, j;
+            bool yes_add = true;
+
+            for (i = 0; i < 5; i++)
+            {
+                for (j = 0; j < 5; j++)
+                {
+                    if (x == str_key[i, j]) { yes_add = false; i = 6; j = 6; }
+
+                }
+            }
+            return yes_add;
+        }
+        string insert_text()
+        {
+            int i, j, q = 0;
+            string txt;
+            Console.WriteLine("enter text you want");
+            txt = Console.ReadLine();
+            char[] arr_txt = new char[txt.Length]; //balloon
+
+            for (i = 0; i < txt.Length - 1; i = i + 2)
+            {
+                if (txt[i] == txt[i + 1])
+                { txt = txt.Insert(i + 1, "x"); }
+
+
+            }
+            if (txt.Length % 2 == 1) txt = txt + 'x';
+
+            Console.WriteLine("************** inserted_text **************");
+            Console.WriteLine(txt);
+
+            return txt;
+        }
+
+        int[] find_idexes(char a, char b)
+        {
+
+            int i = 0, j = 0, i1 = 0, i2 = 0, j1 = 0, j2 = 0;
+            for (i = 0; i < 5; i++)
+                for (j = 0; j < 5; j++)
+                {
+                    if (a == ply[i, j]) { i1 = i; j1 = j; }
+                    if (b == ply[i, j]) { i2 = i; j2 = j; }
+                }
+
+
+
+            int[] ii = { i1, j1, i2, j2 };
+
+            return ii;
+        }
+
+    }
+
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            playfair play1 = new playfair();
+
+
+            play1.start();
+            
+        }
+    }
+}
